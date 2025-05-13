@@ -890,5 +890,37 @@ class DinoGame {
 
 // Start the game when the page loads
 window.addEventListener('load', () => {
-    new DinoGame();
+    const loadingScreen = document.getElementById('loading-screen');
+    const gameContainer = document.getElementById('game-container');
+    const startPopup = document.getElementById('start-popup');
+
+    // Hide game container and start popup initially
+    gameContainer.style.display = 'none';
+    startPopup.style.display = 'none';
+
+    // Show loading screen for 3 seconds
+    setTimeout(() => {
+        loadingScreen.style.display = 'none';
+        // Show start popup
+        startPopup.style.display = 'flex';
+        // Wait for user input to start the game
+        const startGame = () => {
+            startPopup.style.display = 'none';
+            gameContainer.style.display = 'block';
+            new DinoGame();
+            document.removeEventListener('keydown', onKeyDown);
+            startPopup.removeEventListener('touchstart', onTouchStart);
+        };
+        const onKeyDown = (e) => {
+            if (e.code === 'Space') {
+                startGame();
+            }
+        };
+        const onTouchStart = (e) => {
+            e.preventDefault();
+            startGame();
+        };
+        document.addEventListener('keydown', onKeyDown);
+        startPopup.addEventListener('touchstart', onTouchStart);
+    }, 3000);
 }); 

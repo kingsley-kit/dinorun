@@ -343,4 +343,68 @@ body {
     25% { transform: translateY(-5px) rotate(-2deg); }
     75% { transform: translateY(5px) rotate(2deg); }
     100% { transform: translateY(0) rotate(0deg); }
+}
+
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#loading-dino {
+    width: 85px;
+    height: 100px;
+    background-image: url('assets/dino loading.png');
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    image-rendering: pixelated;
+    animation: loading 1s steps(7) infinite;
+}
+
+@keyframes loading {
+    from { background-position: 0 0; }
+    to { background-position: -730px 0; }
+}
+
+.popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    background: rgba(255,255,255,0.0); /* transparent, just for centering */
+}
+
+.popup-content {
+    background: #fff6e3;
+    border: 4px solid #222;
+    border-radius: 12px;
+    box-shadow: 4px 6px 0 #888, 0 4px 24px rgba(0,0,0,0.10);
+    padding: 36px 32px 28px 32px;
+    min-width: 420px;
+    color: #111;
+    font-family: 'Pixelify Sans';
+    font-size: 1.6em;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.popup-message {
+    margin: 0;
+}
+
+#start-popup {
+    display: none;
 } 
