@@ -1,0 +1,346 @@
+@font-face {
+    font-family: 'Pixelify Sans';
+    src: url('font/PixelifySans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Pixelify Sans';
+    src: url('font/PixelifySans-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+:root {
+    --cactus-width: 60px;
+    --cactus-height: 120px;
+    --cactus3-width: 120px;
+    --cactus3-height: 180px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M12 2L2 12L12 22L22 12L12 2Z"/></svg>') 12 12, auto;
+    font-family: 'Pixelify Sans';
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    background: url('assets/background.png') repeat-x,
+                linear-gradient(to top, #f8c291, #fcd5ce, #a3d5ff);
+    background-size: auto 100%;
+    background-position: 0 500px;
+    overflow: hidden;
+}
+
+#dino {
+    width: 120px;
+    height: 100px;
+    position: absolute;
+    bottom: 25px;
+    left: 50px;
+    background-image: url('assets/dino-run.png');
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    image-rendering: pixelated;
+    z-index: 3;
+}
+
+#ground {
+    width: 100%;
+    height: 50px;
+    background: url('assets/tile.png') repeat-x;
+    background-size: auto 100%;
+    position: absolute;
+    bottom: 0;
+    z-index: 2;
+}
+
+.obstacle {
+    position: absolute;
+    bottom: 50px;
+    z-index: 2;
+}
+
+#score {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-family: 'Pixelify Sans';
+    font-weight: bold;
+    font-size: 24px;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Pixelify Sans';
+    font-size: 1.6em;
+    font-weight: bold;
+    text-align: center;
+    background: #fff6e3;
+    border: 4px solid #222;
+    border-radius: 12px;
+    box-shadow: 4px 6px 0 #888, 0 4px 24px rgba(0,0,0,0.10);
+    padding: 36px 32px 28px 32px;
+    min-width: 420px;
+    z-index: 200;
+    color: #111;
+    letter-spacing: 0.5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.dino-running {
+    /* Using 6 steps for 6 frames, adjusted timing for smooth animation */
+    animation: run 0.6s steps(6) infinite;
+}
+
+.dino-jumping {
+    /* Switch to the jumping sprite sheet */
+    background-image: url('assets/dino-jump.png');
+    animation: none;
+}
+
+.dino-hit {
+    background-image: url('assets/dino-hit.png');
+    animation: hit 0.3s steps(3) 3;
+}
+
+@keyframes run {
+    /* For 6 frames of 40px each, total width is 240px */
+    from { background-position: 0 0; }
+    to { background-position: -625px 0; }
+}
+
+@keyframes hit {
+    from { background-position: 0 0; }
+    to { background-position: -600px 0; } /* 2 * 60px = 120px for 3 frames */
+}
+
+.cloud {
+    position: absolute;
+    background-image: url('assets/cloud.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 100px;
+    height: 60px;
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.golden-egg {
+    position: absolute;
+    bottom: 45px;
+    width: 36px;
+    height: 48px;
+    background-image: url('assets/goldenegg.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    animation: pulse 1s infinite;
+    filter: drop-shadow(0 0 16px gold);
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 16px gold); }
+    50% { transform: scale(1.15); filter: drop-shadow(0 0 32px gold); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 16px gold); }
+}
+
+#dino.invincible {
+    filter: drop-shadow(0 0 8px #ffe066) drop-shadow(0 0 16px gold) drop-shadow(0 0 32px gold);
+    position: absolute;
+    overflow: visible;
+}
+#dino.invincible::after {
+    content: none;
+}
+
+#egg-counter {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    font-family: 'Pixelify Sans';
+    font-size: 22px;
+    color: #141414;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#quiz-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff6e3;
+    border: 4px solid #222;
+    border-radius: 8px;
+    padding: 32px 32px 24px 32px;
+    z-index: 100;
+    box-shadow: 4px 6px 0 #888, 0 4px 24px rgba(0,0,0,0.10);
+    display: none;
+    min-width: 420px;
+    text-align: center;
+    font-family: 'Pixelify Sans';
+}
+#quiz-modal h2 {
+    color: #111;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 2.3em;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    margin-top: 0;
+}
+#quiz-modal .quiz-divider {
+    width: 100%;
+    height: 4px;
+    background: #f3e0c0;
+    border: none;
+    margin: 0 0 24px 0;
+}
+#quiz-modal #quiz-question {
+    font-size: 1.5em;
+    margin-bottom: 28px;
+    font-weight: bold;
+    color: #111;
+    text-align: center;
+}
+#quiz-modal .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 0;
+    align-items: flex-start;
+}
+#quiz-modal .quiz-option-btn {
+    font-size: 1.35em;
+    padding: 0 0 0 0;
+    border-radius: 0;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-weight: bold;
+    color: #111;
+}
+#quiz-modal .quiz-option-btn:hover {
+    background: #f3e0c0;
+}
+#quiz-modal .option-letter {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 8px;
+    color: #111;
+    width: 32px;
+    display: inline-block;
+    text-align: center;
+}
+#quiz-timer {
+    display: none;
+}
+
+.quiz-options.centered {
+    align-items: center !important;
+    justify-content: center;
+}
+.quiz-feedback {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin: 8px 0 4px 0;
+    display: block;
+    width: 100%;
+}
+#resume-countdown.quiz-feedback {
+    font-weight: bold;
+    margin-top: 6px;
+    margin-bottom: 0;
+    font-size: 1.5em;
+}
+
+#invincible-timer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: 'Pixelify Sans';
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #ffe066;
+    text-shadow: 1px 1px 4px #222, 0 0 8px #bfa100;
+    background: rgba(34,34,34,0.7);
+    padding: 8px 18px;
+    border-radius: 8px;
+    z-index: 20;
+    display: none;
+}
+
+#rocket-invincible-timer {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: 'Pixelify Sans';
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #ff6b6b;
+    text-shadow: 1px 1px 4px #222, 0 0 8px #ff6b6b;
+    background: rgba(34,34,34,0.7);
+    padding: 8px 18px;
+    border-radius: 8px;
+    z-index: 20;
+    display: none;
+}
+
+.rocket-dino {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    background-image: url('assets/rocket-dino.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    z-index: 2;
+    animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.dino-boosting {
+    background-image: url('assets/dino-boost.png') !important;
+    animation: boost-hover 0.8s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px #ff6b6b) drop-shadow(0 0 16px #ff6b6b);
+    width: 140px !important;
+    height: 120px !important;
+    transform-origin: center bottom;
+}
+
+@keyframes boost-hover {
+    0% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-5px) rotate(-2deg); }
+    75% { transform: translateY(5px) rotate(2deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+} 
