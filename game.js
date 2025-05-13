@@ -34,9 +34,9 @@ class DinoGame {
         this.minGapLimit = 110; // px, never go below this
         this.baseSpawnInterval = 1600; // ms, easy start
         this.spawnIntervalLimit = 600; // ms, never go below this
-        this.lastObstacleRight = window.innerWidth; // track rightmost obstacle
+        this.lastObstacleRight = this.gameContainer.offsetWidth; // track rightmost obstacle
         this.distanceTraveled = 0;
-        this.lastObstacleX = window.innerWidth;
+        this.lastObstacleX = this.gameContainer.offsetWidth;
         this.nextObstacleDistance = this.getNextObstacleDistance();
         this.level1JumpForce = 15; // Level 1 jump force (easy to adjust)
         this.level2JumpForce = 20; // Level 2 max jump force (easy to adjust)
@@ -235,7 +235,7 @@ class DinoGame {
     }
 
     getNextObstacleDistance() {
-        // Make it easier before 500 score
+        // Use same gap for all screens
         if (this.score < 500) {
             const minGap = 380;
             const maxGap = 520;
@@ -250,10 +250,12 @@ class DinoGame {
     }
 
     createObstacle() {
-        // Use distance-based spawning
+        // Always spawn if no obstacles (first spawn)
+        if (this.obstacles.length === 0) {
+            this.lastObstacleX = this.gameContainer.offsetWidth;
+        }
         const rightmost = this.lastObstacleX;
-        if (rightmost < window.innerWidth - this.nextObstacleDistance) {
-            // Randomly pick group size, but make groups less frequent
+        if (rightmost < this.gameContainer.offsetWidth - this.nextObstacleDistance || this.obstacles.length === 0) {
             let groupCount = 1;
             if (this.score < 500) {
                 if (Math.random() < 0.05) groupCount = 3;
@@ -267,17 +269,24 @@ class DinoGame {
                 { w: 60, h: 80, img: 'assets/cactus2.png' },
                 { w: 80, h: 80, img: 'assets/cactus3.png' }
             ];
-            let left = window.innerWidth + 10;
+            let left = this.gameContainer.offsetWidth + 10;
             for (let i = 0; i < groupCount; i++) {
-                // Randomly pick cactus type for each obstacle
                 const type = Math.floor(Math.random() * 3);
-                const { w, h, img } = cactusSizes[type];
+                let { w, h, img } = cactusSizes[type];
+                if (window.innerWidth <= 600) {
+                    // Scale each obstacle to keep desktop ratio on mobile, but make cactus1 and cactus2 a bit smaller
+                    const baseHeight = Math.round(this.gameContainer.offsetHeight * 0.11);
+                    const ratios = [0.42, 0.58, 1]; // cactus1, cactus2, cactus3
+                    h = baseHeight;
+                    w = Math.round(baseHeight * ratios[type]);
+                }
                 const obstacle = document.createElement('div');
-                obstacle.className = 'obstacle';
+                const typeNames = ['cactus1', 'cactus2', 'cactus3'];
+                obstacle.className = 'obstacle ' + typeNames[type];
                 obstacle.style.left = `${left}px`;
                 obstacle.style.width = `${w}px`;
                 obstacle.style.height = `${h}px`;
-                obstacle.style.bottom = '50px';
+                obstacle.style.bottom = `${window.innerWidth <= 600 ? Math.round(this.gameContainer.offsetHeight * 0.08) : 50}px`;
                 obstacle.style.backgroundImage = `url('${img}')`;
                 obstacle.style.backgroundSize = 'contain';
                 obstacle.style.backgroundRepeat = 'no-repeat';
@@ -285,7 +294,7 @@ class DinoGame {
                 obstacle.style.backgroundColor = 'transparent';
                 this.gameContainer.appendChild(obstacle);
                 this.obstacles.push(obstacle);
-                left += w + 8; // 8px gap between grouped cacti
+                left += w + 8;
             }
             this.lastObstacleX = left;
             this.nextObstacleDistance = this.getNextObstacleDistance();
@@ -318,8 +327,10 @@ class DinoGame {
         const dinoRect = this.dino.getBoundingClientRect();
         const obstacleRect = obstacle.getBoundingClientRect();
 
-        // Shrink dino's collision box by 0px on each side
-        const dinoShrink = 15;
+        // Use different shrink values for mobile and desktop
+        const isMobile = window.innerWidth <= 600;
+        const dinoShrink = isMobile ? 20 : 15;
+        const obsShrink = isMobile ? 40 : 22;
         const dinoBox = {
             left: dinoRect.left + dinoShrink,
             right: dinoRect.right - dinoShrink,
@@ -327,8 +338,6 @@ class DinoGame {
             bottom: dinoRect.bottom - dinoShrink
         };
 
-        // Shrink obstacle's collision box by 0px on each side
-        const obsShrink = 22;
         const obsBox = {
             left: obstacleRect.left + obsShrink,
             right: obstacleRect.right - obsShrink,
@@ -404,6 +413,8 @@ class DinoGame {
         if (this.boostTimeout) clearTimeout(this.boostTimeout);
         this.currentSpeed = this.obstacleSpeed;
         this.dino.classList.remove('dino-boosting');
+        // Ensure obstacles spawn after reset
+        this.lastObstacleX = this.gameContainer.offsetWidth;
     }
 
     createCloud() {
@@ -415,7 +426,7 @@ class DinoGame {
             // Random height for cloud
             const height = Math.random() * (this.maxCloudHeight - this.minCloudHeight) + this.minCloudHeight;
             cloud.style.top = `${height}px`;
-            cloud.style.left = `${window.innerWidth}px`;
+            cloud.style.left = `${this.gameContainer.offsetWidth}px`;
             
             // Random scale for variety
             const scale = 0.5 + Math.random() * 0.5;
@@ -453,68 +464,66 @@ class DinoGame {
     }
 
     spawnGoldenEgg() {
+        // Don't spawn if there's already a golden egg
         if (this.goldenEgg) return;
-        // Find a clear spot (not overlapping with obstacles)
-        let left = window.innerWidth + 10;
-        let eggWidth = 60;
-        let eggHeight = 80;
-        let bottom = 30; // same as .golden-egg CSS
-        // Check for overlap with obstacles
-        let overlaps = false;
-        for (let i = 0; i < this.obstacles.length; i++) {
-            const obs = this.obstacles[i];
-            const obsLeft = parseFloat(obs.style.left);
-            const obsRight = obsLeft + parseFloat(obs.style.width);
-            // If the egg would overlap with this obstacle
-            if (
-                (left < obsRight && left + eggWidth > obsLeft)
-            ) {
-                overlaps = true;
-                break;
-            }
+
+        // Don't spawn if there are no obstacles
+        if (this.obstacles.length === 0) return;
+
+        // Get the last obstacle's position
+        const lastObstacle = this.obstacles[this.obstacles.length - 1];
+        const lastObstacleLeft = parseFloat(lastObstacle.style.left);
+        const lastObstacleWidth = parseFloat(lastObstacle.style.width);
+        const minDistance = 250; // Minimum distance from last obstacle
+        // Get ground height dynamically
+        let groundHeight = 50;
+        if (this.ground) {
+            const groundRect = this.ground.getBoundingClientRect();
+            groundHeight = groundRect.height;
         }
-        if (overlaps) {
-            // Try again next frame
-            this.nextEggTime = performance.now() + 100;
-            return;
-        }
-        // Also check for obstacles that will reach the egg's spawn position soon
-        for (let i = 0; i < this.obstacles.length; i++) {
-            const obs = this.obstacles[i];
-            const obsLeft = parseFloat(obs.style.left);
-            const obsRight = obsLeft + parseFloat(obs.style.width);
-            // Predict if any obstacle will reach the egg's spawn position within 1 second
-            const timeToReach = (left - obsRight) / this.currentSpeed;
-            if (timeToReach > 0 && timeToReach < 60) { // 60 frames ~ 1 second
-                overlaps = true;
-                break;
-            }
-        }
-        if (overlaps) {
-            this.nextEggTime = performance.now() + 100;
-            return;
-        }
-        const egg = document.createElement('div');
-        egg.className = 'golden-egg';
-        egg.style.left = `${left}px`;
-        this.gameContainer.appendChild(egg);
-        this.goldenEgg = egg;
+        // Calculate spawn X: always at least off-screen to the right
+        const spawnX = Math.max(
+            lastObstacleLeft + lastObstacleWidth + minDistance,
+            this.gameContainer.offsetWidth + minDistance
+        );
+        // Create golden egg with position after the last obstacle
+        this.goldenEgg = {
+            element: document.createElement('div'),
+            x: spawnX,
+            y: 0,
+            width: 40,
+            height: 40,
+            collected: false
+        };
+        // Style the golden egg
+        this.goldenEgg.element.className = 'golden-egg';
+        this.goldenEgg.element.style.width = this.goldenEgg.width + 'px';
+        this.goldenEgg.element.style.height = this.goldenEgg.height + 'px';
+        this.goldenEgg.element.style.backgroundImage = 'url("assets/goldenegg.png")';
+        this.goldenEgg.element.style.backgroundSize = 'contain';
+        this.goldenEgg.element.style.backgroundRepeat = 'no-repeat';
+        this.goldenEgg.element.style.position = 'absolute';
+        this.goldenEgg.element.style.bottom = groundHeight + 'px';
+        this.goldenEgg.element.style.left = spawnX + 'px';
+        this.goldenEgg.element.style.zIndex = '2';
+        // Add to game container
+        this.gameContainer.appendChild(this.goldenEgg.element);
     }
 
     updateGoldenEgg() {
         if (!this.goldenEgg) return;
-        let currentLeft = parseFloat(this.goldenEgg.style.left);
+        let currentLeft = parseFloat(this.goldenEgg.element.style.left);
         currentLeft -= this.currentSpeed;
-        this.goldenEgg.style.left = `${currentLeft}px`;
+        this.goldenEgg.element.style.left = `${currentLeft}px`;
         // Remove if off screen
         if (currentLeft < -60) {
-            this.goldenEgg.remove();
+            this.goldenEgg.element.remove();
             this.goldenEgg = null;
             this.nextEggTime = this.getNextEggTime();
             return;
         }
         // Check collision
-        if (this.checkEggCollision(this.goldenEgg)) {
+        if (this.checkEggCollision(this.goldenEgg.element)) {
             this.handleEggCollision();
         }
     }
@@ -547,7 +556,7 @@ class DinoGame {
 
     handleEggCollision() {
         if (!this.goldenEgg) return;
-        this.goldenEgg.remove();
+        this.goldenEgg.element.remove();
         this.goldenEgg = null;
         this.pauseGameForQuiz();
     }
@@ -680,13 +689,21 @@ class DinoGame {
 
     spawnRocketDino() {
         if (this.rocketDino) return;
-        
-        // Find a clear spot in the air
-        const height = 200 + Math.random() * 100; // Random height between 200-300px
+        const containerHeight = this.gameContainer.offsetHeight;
+        // Get ground height dynamically
+        let groundHeight = 50;
+        if (this.ground) {
+            const groundRect = this.ground.getBoundingClientRect();
+            groundHeight = groundRect.height;
+        }
+        // Set rocket dino height (should match .rocket-dino CSS)
+        const rocketHeight = 100; // px
+        const offsetAboveGround = 120; // px (increased from 40)
+        const top = containerHeight - groundHeight - rocketHeight - offsetAboveGround;
         const rocket = document.createElement('div');
         rocket.className = 'rocket-dino';
-        rocket.style.left = `${window.innerWidth}px`;
-        rocket.style.top = `${height}px`;
+        rocket.style.left = `${this.gameContainer.offsetWidth}px`;
+        rocket.style.top = `${top}px`;
         this.gameContainer.appendChild(rocket);
         this.rocketDino = rocket;
     }
@@ -903,10 +920,18 @@ window.addEventListener('load', () => {
         loadingScreen.style.display = 'none';
         // Show start popup
         startPopup.style.display = 'flex';
+        // Set white background for start screen on mobile
+        if (window.innerWidth <= 600) {
+            document.body.classList.add('start-screen-bg');
+        }
         // Wait for user input to start the game
         const startGame = () => {
             startPopup.style.display = 'none';
             gameContainer.style.display = 'block';
+            // Remove white background, show game background
+            if (window.innerWidth <= 600) {
+                document.body.classList.remove('start-screen-bg');
+            }
             new DinoGame();
             document.removeEventListener('keydown', onKeyDown);
             startPopup.removeEventListener('touchstart', onTouchStart);
