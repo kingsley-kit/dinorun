@@ -18,10 +18,10 @@ class DinoGame {
         this.velocity = 0;
         this.position = window.innerWidth <= 600 ? 20 : 45;
         this.obstacles = [];
-        this.obstacleSpeed = 4.0;  // Reduced from 6.0 for easier start
-        this.currentSpeed = 4.0;   // Reduced from 6.0 for easier start
+        this.obstacleSpeed = 5.0;  // Reduced from 6.0 for easier start
+        this.currentSpeed = 5.0;   // Reduced from 6.0 for easier start
         this.maxSpeed = 13.0;
-        this.acceleration = 0.00045; // Reduced from 0.00065 for slower acceleration
+        this.acceleration = 0.00065; // Reduced from 0.00065 for slower acceleration
         this.lastObstacleTime = 0;
         this.minObstacleInterval = 1200; // Increased from 800 for more time between obstacles
         this.maxObstacleInterval = 2000; // Increased from 1600 for more time between obstacles
