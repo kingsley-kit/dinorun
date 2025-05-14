@@ -16,7 +16,7 @@ class DinoGame {
         this.maxJumpForce = 13; // higher jump
         this.jumpChargeCap = 75; // Reduced from 150ms to 75ms
         this.velocity = 0;
-        this.position = 45;
+        this.position = window.innerWidth <= 600 ? 20 : 45;
         this.obstacles = [];
         this.obstacleSpeed = 6.5; // initial speed
         this.currentSpeed = 6.5; // for acceleration
@@ -38,8 +38,14 @@ class DinoGame {
         this.distanceTraveled = 0;
         this.lastObstacleX = this.gameContainer.offsetWidth;
         this.nextObstacleDistance = this.getNextObstacleDistance();
-        this.level1JumpForce = 15; // Level 1 jump force (easy to adjust)
-        this.level2JumpForce = 20; // Level 2 max jump force (easy to adjust)
+        // Set jump force based on device
+        if (window.innerWidth <= 600) {
+            this.level1JumpForce = 11;  // Mobile jump force
+            this.level2JumpForce = 15;
+        } else {
+            this.level1JumpForce = 15;
+            this.level2JumpForce = 20;
+        }
         
         // Cloud properties
         this.clouds = [];
@@ -274,11 +280,9 @@ class DinoGame {
                 const type = Math.floor(Math.random() * 3);
                 let { w, h, img } = cactusSizes[type];
                 if (window.innerWidth <= 600) {
-                    // Scale each obstacle to keep desktop ratio on mobile, but make cactus1 and cactus2 a bit smaller
-                    const baseHeight = Math.round(this.gameContainer.offsetHeight * 0.11);
-                    const ratios = [0.42, 0.58, 1]; // cactus1, cactus2, cactus3
-                    h = baseHeight;
-                    w = Math.round(baseHeight * ratios[type]);
+                    // Set all obstacles to match dino height in mobile
+                    h = 48;
+                    w = 28 + type * 10; // Slight width variation for each type
                 }
                 const obstacle = document.createElement('div');
                 const typeNames = ['cactus1', 'cactus2', 'cactus3'];
@@ -286,7 +290,7 @@ class DinoGame {
                 obstacle.style.left = `${left}px`;
                 obstacle.style.width = `${w}px`;
                 obstacle.style.height = `${h}px`;
-                obstacle.style.bottom = `${window.innerWidth <= 600 ? Math.round(this.gameContainer.offsetHeight * 0.08) : 50}px`;
+                obstacle.style.bottom = `${window.innerWidth <= 600 ? Math.round(this.gameContainer.offsetHeight * 0.10) : 50}px`;
                 obstacle.style.backgroundImage = `url('${img}')`;
                 obstacle.style.backgroundSize = 'contain';
                 obstacle.style.backgroundRepeat = 'no-repeat';
@@ -327,10 +331,10 @@ class DinoGame {
         const dinoRect = this.dino.getBoundingClientRect();
         const obstacleRect = obstacle.getBoundingClientRect();
 
-        // Use different shrink values for mobile and desktop
+        // Use different shrink values for mobile
         const isMobile = window.innerWidth <= 600;
-        const dinoShrink = isMobile ? 20 : 15;
-        const obsShrink = isMobile ? 40 : 22;
+        const dinoShrink = isMobile ? 8 : 15;
+        const obsShrink = isMobile ? 12 : 22;
         const dinoBox = {
             left: dinoRect.left + dinoShrink,
             right: dinoRect.right - dinoShrink,
@@ -382,9 +386,15 @@ class DinoGame {
         this.gameOverElement.classList.add('hidden');
         this.position = 45;
         this.velocity = 0;
-        this.dino.style.bottom = '45px';
-        this.dino.style.width = '120px';
-        this.dino.style.height = '100px';
+        this.dino.style.bottom = window.innerWidth <= 600 ? '20px' : '45px';
+        // Set dino size based on screen width
+        if (window.innerWidth <= 600) {
+            this.dino.style.width = DINO_FRAME_WIDTH_MOBILE + 'px';
+            this.dino.style.height = DINO_FRAME_HEIGHT_MOBILE + 'px';
+        } else {
+            this.dino.style.width = DINO_FRAME_WIDTH_DESKTOP + 'px';
+            this.dino.style.height = DINO_FRAME_HEIGHT_DESKTOP + 'px';
+        }
         this.lastScoreUpdateTime = performance.now();
         this.obstacles.forEach(obstacle => obstacle.remove());
         this.obstacles = [];
@@ -491,8 +501,8 @@ class DinoGame {
             element: document.createElement('div'),
             x: spawnX,
             y: 0,
-            width: 40,
-            height: 40,
+            width: window.innerWidth <= 600 ? 16 : 40,
+            height: window.innerWidth <= 600 ? 18 : 40,
             collected: false
         };
         // Style the golden egg
@@ -600,7 +610,26 @@ class DinoGame {
         questionObj.options.forEach((opt, idx) => {
             const btn = document.createElement('button');
             btn.className = 'quiz-option-btn';
+            
+            // Add click handler for keyboard/mouse
             btn.onclick = () => this.handleQuizAnswer(idx === questionObj.answer);
+            
+            // Add touch handlers for mobile
+            let lastTap = 0;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                
+                if (tapLength < 500 && tapLength > 0) {
+                    // Double tap detected
+                    this.handleQuizAnswer(idx === questionObj.answer);
+                } else {
+                    // Single tap - wait for potential double tap
+                    lastTap = currentTime;
+                }
+            });
+            
             const letterSpan = document.createElement('span');
             letterSpan.className = 'option-letter';
             letterSpan.textContent = letters[idx];
@@ -608,7 +637,6 @@ class DinoGame {
             btn.appendChild(document.createTextNode(opt.replace(/^\w\)\s*/, '')));
             optionsDiv.appendChild(btn);
         });
-        // No timer: unlimited time to answer
     }
 
     handleQuizAnswer(correct) {
@@ -697,13 +725,16 @@ class DinoGame {
             groundHeight = groundRect.height;
         }
         // Set rocket dino height (should match .rocket-dino CSS)
-        const rocketHeight = 100; // px
-        const offsetAboveGround = 120; // px (increased from 40)
+        const rocketHeight = window.innerWidth <= 600 ? 22 : 70; // px
+        const rocketWidth = window.innerWidth <= 600 ? 22 : 70; // px
+        const offsetAboveGround = window.innerWidth <= 600 ? 90 : 120; // px
         const top = containerHeight - groundHeight - rocketHeight - offsetAboveGround;
         const rocket = document.createElement('div');
         rocket.className = 'rocket-dino';
         rocket.style.left = `${this.gameContainer.offsetWidth}px`;
         rocket.style.top = `${top}px`;
+        rocket.style.width = rocketWidth + 'px';
+        rocket.style.height = rocketHeight + 'px';
         this.gameContainer.appendChild(rocket);
         this.rocketDino = rocket;
     }
@@ -770,6 +801,11 @@ class DinoGame {
         
         this.isBoosting = true;
         this.dino.classList.add('dino-boosting');
+        // Set dino boost size for mobile
+        if (window.innerWidth <= 600) {
+            this.dino.style.width = '70px';
+            this.dino.style.height = '60px';
+        }
         
         // First phase: Pick up rocket and float to mid-air
         const startHeight = this.position;
@@ -844,7 +880,14 @@ class DinoGame {
         this.isBoosting = false;
         this.dino.classList.remove('dino-boosting');
         this.currentSpeed = this.originalSpeed;
-        
+        // Reset dino size after boost
+        if (window.innerWidth <= 600) {
+            this.dino.style.width = DINO_FRAME_WIDTH_MOBILE + 'px';
+            this.dino.style.height = DINO_FRAME_HEIGHT_MOBILE + 'px';
+        } else {
+            this.dino.style.width = DINO_FRAME_WIDTH_DESKTOP + 'px';
+            this.dino.style.height = DINO_FRAME_HEIGHT_DESKTOP + 'px';
+        }
         // Drop down phase
         const startHeight = this.position;
         const targetHeight = 45; // Ground level
@@ -948,4 +991,26 @@ window.addEventListener('load', () => {
         document.addEventListener('keydown', onKeyDown);
         startPopup.addEventListener('touchstart', onTouchStart);
     }, 3000);
-}); 
+});
+
+// Dino frame size constants
+const DINO_FRAME_WIDTH_DESKTOP = 120; // px
+const DINO_FRAME_HEIGHT_DESKTOP = 100; // px
+const DINO_FRAME_WIDTH_MOBILE = 78; // px (adjust as needed)
+const DINO_FRAME_HEIGHT_MOBILE = 68; // px (adjust as needed)
+
+// Set dino size based on screen width before game starts
+function setInitialDinoSize() {
+    const dino = document.getElementById('dino');
+    if (!dino) return;
+    if (window.innerWidth <= 600) {
+        dino.style.width = DINO_FRAME_WIDTH_MOBILE + 'px';
+        dino.style.height = DINO_FRAME_HEIGHT_MOBILE + 'px';
+    } else {
+        dino.style.width = DINO_FRAME_WIDTH_DESKTOP + 'px';
+        dino.style.height = DINO_FRAME_HEIGHT_DESKTOP + 'px';
+    }
+}
+
+setInitialDinoSize();
+window.addEventListener('resize', setInitialDinoSize); 

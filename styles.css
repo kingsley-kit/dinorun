@@ -46,7 +46,6 @@ body {
     width: 120px;
     height: 100px;
     position: absolute;
-    bottom: 30px;
     left: 50px;
     background-image: url('assets/dino-run.png');
     background-repeat: no-repeat;
@@ -317,8 +316,8 @@ body {
 
 .rocket-dino {
     position: absolute;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     background-image: url('assets/rocket-dino.png');
     background-size: contain;
     background-repeat: no-repeat;
@@ -455,27 +454,24 @@ body {
   #quiz-modal .option-letter,
   .quiz-feedback,
   #resume-countdown.quiz-feedback {
-    font-size: 1.1em !important;
+    font-size: 1.0em !important;
   }
-  .obstacle,
-  .cactus1,
-  .cactus2,
-  .cactus3 {
-    width: 100px !important;
-    height: 80px !important;
+  #dino {
+    /* bottom property removed to allow JS control */
   }
   .cloud {
     width: 10vh;
     height: 6vh;
   }
   .golden-egg {
-    width: 5vh !important;
-    height: 7vh !important;
-    bottom: 4vh;
+    width: 3vh !important;
+    height: 5vh !important;
+    bottom: 1vh;
   }
   .rocket-dino {
-    width: 8vh !important;
-    height: 8vh !important;
+    width: 4vh !important;
+    height: 4vh !important;
+    bottom: 4vh;
   }
   #ground {
     height: 6vh;
@@ -516,13 +512,13 @@ body {
   }
   #invincible-timer img, #rocket-invincible-timer img {
     width: 7vw !important;
-    height: auto;
+    height: 7vw !important;
     vertical-align: middle;
   }
   #game-over, #quiz-modal, .popup-content {
     min-width: 0 !important;
     width: 90vw !important;
-    font-size: 1.5em !important;
+    font-size: 1.3em !important;
     padding: 18px 6vw 14px 6vw !important;
     box-sizing: border-box;
   }
@@ -530,11 +526,25 @@ body {
 #quiz-modal .quiz-option-btn,
 #quiz-modal .option-letter {
   font-family: 'Pixelify Sans' !important;
-  font-weight: bold !important;
+  font-weight: normal !important;
+  font-size: 1.0em !important;
 }
 
 #egg-counter img {
   width: 28px !important;
   height: auto;
   vertical-align: middle;
+}
+
+@media (max-width: 600px) {
+  @keyframes run {
+    from { background-position: 0 0; }
+    to { background-position: -426px 0; } /* 6 frames × 58px = 348px */
+  }
+  .dino-boosting {
+    width: 60px !important;
+    height: 50px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+  }
 } 
