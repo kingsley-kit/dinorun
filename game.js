@@ -162,26 +162,50 @@ class DinoGame {
             }
         });
 
-        // Touch controls
-        this.gameContainer.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const quizModal = document.getElementById('quiz-modal');
-            if (quizModal && quizModal.style.display === 'block') return;
-            if (this.isGameOver) {
-                this.resetGame();
-            } else if (!this.isJumping && this.isOnGround) {
-                this.startJump();
-            }
-        });
+        // Touch controls - different behavior for mobile and desktop
+        if (window.innerWidth <= 600) {
+            // Mobile: Allow touch anywhere on screen
+            document.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const quizModal = document.getElementById('quiz-modal');
+                if (quizModal && quizModal.style.display === 'block') return;
+                if (this.isGameOver) {
+                    this.resetGame();
+                } else if (!this.isJumping && this.isOnGround) {
+                    this.startJump();
+                }
+            });
 
-        this.gameContainer.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            const quizModal = document.getElementById('quiz-modal');
-            if (quizModal && quizModal.style.display === 'block') return;
-            if (this.isJumping) {
-                this.releaseJump();
-            }
-        });
+            document.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const quizModal = document.getElementById('quiz-modal');
+                if (quizModal && quizModal.style.display === 'block') return;
+                if (this.isJumping) {
+                    this.releaseJump();
+                }
+            });
+        } else {
+            // Desktop: Keep touch events on game container only
+            this.gameContainer.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const quizModal = document.getElementById('quiz-modal');
+                if (quizModal && quizModal.style.display === 'block') return;
+                if (this.isGameOver) {
+                    this.resetGame();
+                } else if (!this.isJumping && this.isOnGround) {
+                    this.startJump();
+                }
+            });
+
+            this.gameContainer.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const quizModal = document.getElementById('quiz-modal');
+                if (quizModal && quizModal.style.display === 'block') return;
+                if (this.isJumping) {
+                    this.releaseJump();
+                }
+            });
+        }
     }
 
     startJump() {
