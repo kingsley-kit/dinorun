@@ -18,21 +18,21 @@ class DinoGame {
         this.velocity = 0;
         this.position = window.innerWidth <= 600 ? 20 : 45;
         this.obstacles = [];
-        this.obstacleSpeed = 6.0;
-        this.currentSpeed = 6.0;
+        this.obstacleSpeed = 4.0;  // Reduced from 6.0 for easier start
+        this.currentSpeed = 4.0;   // Reduced from 6.0 for easier start
         this.maxSpeed = 13.0;
-        this.acceleration = 0.00065;
+        this.acceleration = 0.00045; // Reduced from 0.00065 for slower acceleration
         this.lastObstacleTime = 0;
-        this.minObstacleInterval = 800; // ms
-        this.maxObstacleInterval = 1600; // ms
+        this.minObstacleInterval = 1200; // Increased from 800 for more time between obstacles
+        this.maxObstacleInterval = 2000; // Increased from 1600 for more time between obstacles
         this.nextObstacleInterval = this.getRandomObstacleInterval();
         this.isOnGround = true;
         this.lastScoreUpdateTime = performance.now();
         this.scoreInterval = 50; // ms, fast arcade style
         this.difficulty = 1;
-        this.baseMinGap = 250; // px, easy start
+        this.baseMinGap = 400; // Increased from 250 for wider initial spacing
         this.minGapLimit = 110; // px, never go below this
-        this.baseSpawnInterval = 1600; // ms, easy start
+        this.baseSpawnInterval = 2000; // Increased from 1600 for easier start
         this.spawnIntervalLimit = 600; // ms, never go below this
         this.lastObstacleRight = this.gameContainer.offsetWidth; // track rightmost obstacle
         this.distanceTraveled = 0;
@@ -288,14 +288,14 @@ class DinoGame {
     getNextObstacleDistance() {
         // Use same gap for all screens
         if (this.score < 500) {
-            const minGap = 380;
-            const maxGap = 520;
+            const minGap = 500;  // Increased from 380 for easier start
+            const maxGap = 650;  // Increased from 520 for easier start
             return Math.random() * (maxGap - minGap) + minGap;
         } else {
             // Gradually increase difficulty after 500, but keep easier
             const extra = Math.min(this.score - 500, 1000); // cap for sanity
-            const minGap = Math.max(200, 380 - extra * 0.08);
-            const maxGap = Math.max(minGap + 60, 520 - extra * 0.07);
+            const minGap = Math.max(200, 500 - extra * 0.08); // Adjusted from 380
+            const maxGap = Math.max(minGap + 60, 650 - extra * 0.07); // Adjusted from 520
             return Math.random() * (maxGap - minGap) + minGap;
         }
     }
@@ -309,8 +309,8 @@ class DinoGame {
         if (rightmost < this.gameContainer.offsetWidth - this.nextObstacleDistance || this.obstacles.length === 0) {
             let groupCount = 1;
             if (this.score < 500) {
-                if (Math.random() < 0.05) groupCount = 3;
-                else if (Math.random() < 0.08) groupCount = 2;
+                if (Math.random() < 0.03) groupCount = 3;  // Reduced from 0.05
+                else if (Math.random() < 0.05) groupCount = 2;  // Reduced from 0.08
             } else {
                 if (Math.random() < 0.12) groupCount = 3;
                 else if (Math.random() < 0.18) groupCount = 2;
