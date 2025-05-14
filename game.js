@@ -18,10 +18,10 @@ class DinoGame {
         this.velocity = 0;
         this.position = window.innerWidth <= 600 ? 20 : 45;
         this.obstacles = [];
-        this.obstacleSpeed = 6.5; // initial speed
-        this.currentSpeed = 6.5; // for acceleration
-        this.maxSpeed = 10;
-        this.acceleration = 0.0001;
+        this.obstacleSpeed = 6.0;
+        this.currentSpeed = 6.0;
+        this.maxSpeed = 13.0;
+        this.acceleration = 0.00065;
         this.lastObstacleTime = 0;
         this.minObstacleInterval = 800; // ms
         this.maxObstacleInterval = 1600; // ms
@@ -66,6 +66,8 @@ class DinoGame {
         this.eggTimer = 0;
         this.nextEggTime = this.getNextEggTime();
         this.eggCount = 0;
+        const eggCountElem = document.getElementById('egg-count');
+        if (eggCountElem) eggCountElem.textContent = this.eggCount;
         this.isInvincible = false;
         this.invincibleTimeout = null;
         this.quizQuestions = [
@@ -114,6 +116,7 @@ class DinoGame {
         this.quizTimeout = null;
         this.quizAnswerCallback = null;
         this.quizTimerInterval = null;
+        this.selectedQuizOption = null; // Track selected option for mobile
         // Track used questions
         this.resetQuizPool();
         
@@ -124,6 +127,16 @@ class DinoGame {
         this.boostTimeout = null;
         this.originalSpeed = this.obstacleSpeed;
         this.boostSpeed = this.obstacleSpeed * 2.5;
+        
+        // --- SOUND EFFECTS ---
+        this.sounds = {
+            jump: new Audio('assets/jump.mp3'),
+            gameover: new Audio('assets/gameover.mp3'),
+            rocketthrust: new Audio('assets/rocketthrust.mp3'),
+            correctchoice: new Audio('assets/correctchoice.mp3'),
+            wrongchoice: new Audio('assets/wrongchoice.mp3'),
+            shield: new Audio('assets/shield.mp3'),
+        };
         
         this.setupEventListeners();
         this.gameLoop();
@@ -150,6 +163,8 @@ class DinoGame {
         // Touch controls
         this.gameContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            const quizModal = document.getElementById('quiz-modal');
+            if (quizModal && quizModal.style.display === 'block') return;
             if (this.isGameOver) {
                 this.resetGame();
             } else if (!this.isJumping && this.isOnGround) {
@@ -159,6 +174,8 @@ class DinoGame {
 
         this.gameContainer.addEventListener('touchend', (e) => {
             e.preventDefault();
+            const quizModal = document.getElementById('quiz-modal');
+            if (quizModal && quizModal.style.display === 'block') return;
             if (this.isJumping) {
                 this.releaseJump();
             }
@@ -173,6 +190,8 @@ class DinoGame {
         // Remove running animation and add jumping sprite
         this.dino.classList.remove('dino-running');
         this.dino.classList.add('dino-jumping');
+        // Play jump sound
+        if (this.sounds.jump) { this.sounds.jump.currentTime = 0; this.sounds.jump.play(); }
         // Start charging jump, but do not set velocity yet
         this.jumpChargeInterval = setInterval(() => {
             const now = performance.now();
@@ -333,8 +352,8 @@ class DinoGame {
 
         // Use different shrink values for mobile
         const isMobile = window.innerWidth <= 600;
-        const dinoShrink = isMobile ? 8 : 15;
-        const obsShrink = isMobile ? 12 : 22;
+        const dinoShrink = isMobile ? 10 : 15;
+        const obsShrink = isMobile ? 16 : 22;
         const dinoBox = {
             left: dinoRect.left + dinoShrink,
             right: dinoRect.right - dinoShrink,
@@ -364,6 +383,8 @@ class DinoGame {
         this.dino.classList.remove('dino-running', 'dino-jumping');
         this.dino.classList.add('dino-hit');
         this.dino.style.backgroundImage = "url('assets/dino-hit.png')";
+        // Play game over sound
+        if (this.sounds.gameover) { this.sounds.gameover.currentTime = 0; this.sounds.gameover.play(); }
     }
 
     updateScore() {
@@ -401,7 +422,7 @@ class DinoGame {
         this.clouds.forEach(cloud => cloud.remove());
         this.clouds = [];
         this.backgroundPosition = 0;
-        this.gameContainer.style.backgroundPosition = '0 0';
+        this.gameContainer.style.backgroundPosition = '0px 0';
         this.currentSpeed = this.obstacleSpeed;
         this.dino.classList.remove('dino-jumping', 'dino-hit', 'invincible');
         this.dino.classList.add('dino-running');
@@ -425,6 +446,9 @@ class DinoGame {
         this.dino.classList.remove('dino-boosting');
         // Ensure obstacles spawn after reset
         this.lastObstacleX = this.gameContainer.offsetWidth;
+        this.eggCount = 0;
+        const eggCountElem = document.getElementById('egg-count');
+        if (eggCountElem) eggCountElem.textContent = this.eggCount;
     }
 
     createCloud() {
@@ -615,18 +639,18 @@ class DinoGame {
             btn.onclick = () => this.handleQuizAnswer(idx === questionObj.answer);
             
             // Add touch handlers for mobile
-            let lastTap = 0;
             btn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                const currentTime = new Date().getTime();
-                const tapLength = currentTime - lastTap;
-                
-                if (tapLength < 500 && tapLength > 0) {
-                    // Double tap detected
-                    this.handleQuizAnswer(idx === questionObj.answer);
+                // If not selected, highlight and set as selected
+                if (this.selectedQuizOption !== idx) {
+                    // Remove highlight from all
+                    const allBtns = btn.parentNode.querySelectorAll('.quiz-option-btn');
+                    allBtns.forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    this.selectedQuizOption = idx;
                 } else {
-                    // Single tap - wait for potential double tap
-                    lastTap = currentTime;
+                    // Second tap on same option: submit
+                    this.handleQuizAnswer(idx === questionObj.answer);
                 }
             });
             
@@ -652,10 +676,14 @@ class DinoGame {
         let feedback = '';
         if (correct) {
             feedback = `<div class='quiz-feedback' style='color: #4caf50;'>Correct!</div>`;
+            // Play correct answer sound
+            if (this.sounds.correctchoice) { this.sounds.correctchoice.currentTime = 0; this.sounds.correctchoice.play(); }
         } else {
             const letters = ['A', 'B', 'C', 'D'];
             feedback = `<div class='quiz-feedback' style='color: #e53935;'>Wrong!</div>` +
-                `<div class='quiz-feedback' style='color:#111; font-weight:bold;'>Correct answer: <span style='color:#bfa100;'>${letters[questionObj.answer]}</span> ${questionObj.options[questionObj.answer].replace(/^\w\)\s*/, '')}</div>`;
+                `<div class='quiz-feedback' style='color:#111; font-weight:bold;'>Correct answer: <span style='color:#bfa100;'>${letters[questionObj.answer]}</span> ${questionObj.options[questionObj.answer].replace(/^[\w\)]\s*/, '')}</div>`;
+            // Play wrong answer sound
+            if (this.sounds.wrongchoice) { this.sounds.wrongchoice.currentTime = 0; this.sounds.wrongchoice.play(); }
         }
         optionsDiv.innerHTML = feedback + `<div id='resume-countdown' class='quiz-feedback' style='color:#444; font-weight:normal; margin-top:18px;'></div>`;
         let countdown = 3;
@@ -691,6 +719,8 @@ class DinoGame {
         let seconds = Math.ceil(ms / 1000);
         timerDiv.innerHTML = `<img src='assets/shield.png' style='height:32px;vertical-align:middle;margin-right:8px;'> <span id='inv-sec'>${seconds}</span>s`;
         timerDiv.style.display = 'block';
+        // Play shield sound
+        if (this.sounds.shield) { this.sounds.shield.currentTime = 0; this.sounds.shield.play(); }
         if (this.invincibleTimeout) clearTimeout(this.invincibleTimeout);
         if (this.invincibleInterval) clearInterval(this.invincibleInterval);
         this.invincibleInterval = setInterval(() => {
@@ -725,8 +755,8 @@ class DinoGame {
             groundHeight = groundRect.height;
         }
         // Set rocket dino height (should match .rocket-dino CSS)
-        const rocketHeight = window.innerWidth <= 600 ? 22 : 70; // px
-        const rocketWidth = window.innerWidth <= 600 ? 22 : 70; // px
+        const rocketHeight = window.innerWidth <= 600 ? 25 : 70; // px
+        const rocketWidth = window.innerWidth <= 600 ? 25 : 70; // px
         const offsetAboveGround = window.innerWidth <= 600 ? 90 : 120; // px
         const top = containerHeight - groundHeight - rocketHeight - offsetAboveGround;
         const rocket = document.createElement('div');
@@ -801,10 +831,12 @@ class DinoGame {
         
         this.isBoosting = true;
         this.dino.classList.add('dino-boosting');
+        // Play rocket thrust sound
+        if (this.sounds.rocketthrust) { this.sounds.rocketthrust.currentTime = 0; this.sounds.rocketthrust.play(); }
         // Set dino boost size for mobile
         if (window.innerWidth <= 600) {
-            this.dino.style.width = '70px';
-            this.dino.style.height = '60px';
+            this.dino.style.width = '80px';
+            this.dino.style.height = '80px';
         }
         
         // First phase: Pick up rocket and float to mid-air

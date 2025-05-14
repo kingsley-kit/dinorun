@@ -287,7 +287,7 @@ body {
     top: 20px;
     left: 20px;
     font-family: 'Pixelify Sans';
-    font-size: 1.3em;
+    font-size: 1.0em;
     font-weight: bold;
     color: #ffe066;
     text-shadow: 1px 1px 4px #222, 0 0 8px #bfa100;
@@ -303,7 +303,7 @@ body {
     top: 20px;
     left: 20px;
     font-family: 'Pixelify Sans';
-    font-size: 1.3em;
+    font-size: 1.0em;
     font-weight: bold;
     color: #ff6b6b;
     text-shadow: 1px 1px 4px #222, 0 0 8px #ff6b6b;
@@ -469,8 +469,8 @@ body {
     bottom: 1vh;
   }
   .rocket-dino {
-    width: 4vh !important;
-    height: 4vh !important;
+    width: 5vh !important;
+    height: 5vh !important;
     bottom: 4vh;
   }
   #ground {
@@ -542,9 +542,14 @@ body {
     to { background-position: -426px 0; } /* 6 frames × 58px = 348px */
   }
   .dino-boosting {
-    width: 60px !important;
-    height: 50px !important;
+    width: 70px !important;
+    height: 70px !important;
     min-width: 0 !important;
     min-height: 0 !important;
   }
+}
+
+.quiz-option-btn.selected {
+    background: #ffe066 !important;
+    color: #222 !important;
 } 
