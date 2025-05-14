@@ -309,8 +309,8 @@ class DinoGame {
         if (rightmost < this.gameContainer.offsetWidth - this.nextObstacleDistance || this.obstacles.length === 0) {
             let groupCount = 1;
             if (this.score < 500) {
-                if (Math.random() < 0.03) groupCount = 3;  // Reduced from 0.05
-                else if (Math.random() < 0.05) groupCount = 2;  // Reduced from 0.08
+                if (Math.random() < 0.05) groupCount = 3;  // 5% chance for 3 obstacles
+                else if (Math.random() < 0.10) groupCount = 2;  // 10% chance for 2 obstacles
             } else {
                 if (Math.random() < 0.12) groupCount = 3;
                 else if (Math.random() < 0.18) groupCount = 2;
