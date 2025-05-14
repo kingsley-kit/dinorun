@@ -138,6 +138,8 @@ class DinoGame {
             shield: new Audio('assets/shield.mp3'),
         };
         
+        this.sparkleInterval = null; // For sparkle trail
+        
         this.setupEventListeners();
         this.gameLoop();
     }
@@ -833,6 +835,8 @@ class DinoGame {
         this.dino.classList.add('dino-boosting');
         // Play rocket thrust sound
         if (this.sounds.rocketthrust) { this.sounds.rocketthrust.currentTime = 0; this.sounds.rocketthrust.play(); }
+        // Start sparkle trail
+        this.startSparkleTrail();
         // Set dino boost size for mobile
         if (window.innerWidth <= 600) {
             this.dino.style.width = '80px';
@@ -911,6 +915,8 @@ class DinoGame {
         // Remove boost class and reset speed
         this.isBoosting = false;
         this.dino.classList.remove('dino-boosting');
+        // Stop sparkle trail
+        this.stopSparkleTrail();
         this.currentSpeed = this.originalSpeed;
         // Reset dino size after boost
         if (window.innerWidth <= 600) {
@@ -946,6 +952,42 @@ class DinoGame {
         };
         
         requestAnimationFrame(dropDown);
+    }
+
+    // --- Sparkle Trail Methods ---
+    startSparkleTrail() {
+        if (this.sparkleInterval) return;
+        this.sparkleInterval = setInterval(() => {
+            // Only spawn if dino is boosting
+            if (!this.isBoosting) return;
+            const dinoRect = this.dino.getBoundingClientRect();
+            const containerRect = this.gameContainer.getBoundingClientRect();
+            // Place sparkle behind dino (left side)
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            // Randomize vertical position a bit
+            const offsetY = 28 + Math.random() * (dinoRect.height - 40);
+            // Randomize horizontal offset for natural trail
+            const offsetX = -12 - Math.random() * 24; // 12 to 36px behind dino
+            sparkle.style.left = (dinoRect.left - containerRect.left + offsetX) + 'px';
+            sparkle.style.top = (dinoRect.top - containerRect.top + offsetY) + 'px';
+            // Randomize horizontal drift in animation
+            const drift = (Math.random() - 0.5) * 32; // -16px to +16px
+            sparkle.style.setProperty('--sparkle-x', `${drift}px`);
+            this.gameContainer.appendChild(sparkle);
+            // Remove after animation
+            setTimeout(() => { sparkle.remove(); }, 700);
+        }, 60); // ~16 sparkles per second
+    }
+
+    stopSparkleTrail() {
+        if (this.sparkleInterval) {
+            clearInterval(this.sparkleInterval);
+            this.sparkleInterval = null;
+        }
+        // Remove any remaining sparkles
+        const sparkles = this.gameContainer.querySelectorAll('.sparkle');
+        sparkles.forEach(s => s.remove());
     }
 
     gameLoop() {

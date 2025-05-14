@@ -552,4 +552,25 @@ body {
 .quiz-option-btn.selected {
     background: #ffe066 !important;
     color: #222 !important;
+}
+
+.sparkle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  background: linear-gradient(45deg, #fffbe6 60%, #ffe066 100%);
+  box-shadow: 0 0 4px 2px #ffe066, 0 0 0 2px #fffbe6;
+  opacity: 0.85;
+  z-index: 10;
+  pointer-events: none;
+  image-rendering: pixelated;
+  border-radius: 2px;
+  animation: sparkle-fade 0.7s linear forwards;
+  --sparkle-x: 0px;
+}
+
+@keyframes sparkle-fade {
+  0% { opacity: 1; transform: scale(1) translate(0, 0); }
+  60% { opacity: 0.9; transform: scale(1.2) translate(var(--sparkle-x), 8px); }
+  100% { opacity: 0; transform: scale(0.7) translate(var(--sparkle-x), 18px); }
 } 
