@@ -428,7 +428,7 @@ class DinoGame {
         this.dino.classList.add('dino-hit');
         this.dino.style.backgroundImage = "url('assets/dino-hit.png')";
         // Play game over sound
-        if (this.sounds.gameover) { this.sounds.gameover.currentTime = 0; this.sounds.gameover.play(); }
+        if (this.sounds.gameover) { const gameOverSound = this.sounds.gameover.cloneNode(); gameOverSound.play().catch(() => {}) }
     }
 
     updateScore() {

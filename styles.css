@@ -464,13 +464,13 @@ body {
     height: 6vh;
   }
   .golden-egg {
-    width: 7vh !important;
-    height: 10vh !important;
+    width: 5vh !important;
+    height: 8vh !important;
     bottom: 1vh;
   }
   .rocket-dino {
-    width: 12vh !important;
-    height: 12vh !important;
+    width: 10vh !important;
+    height: 10vh !important;
     bottom: 4vh;
   }
   #ground {
