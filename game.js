@@ -16,7 +16,7 @@ class DinoGame {
         this.maxJumpForce = 13; // higher jump
         this.jumpChargeCap = 75; // Reduced from 150ms to 75ms
         this.velocity = 0;
-        this.position = window.innerWidth <= 600 ? 20 : 45;
+        this.position = 0;
         this.obstacles = [];
         this.obstacleSpeed = 5.0;  // Reduced from 6.0 for easier start
         this.currentSpeed = 5.0;   // Reduced from 6.0 for easier start
@@ -217,7 +217,7 @@ class DinoGame {
         this.dino.classList.remove('dino-running');
         this.dino.classList.add('dino-jumping');
         // Play jump sound
-        if (this.sounds.jump) { this.sounds.jump.currentTime = 0; this.sounds.jump.play(); }
+        if (this.sounds.jump) { const jumpSound = this.sounds.jump.cloneNode();jumpSound.play(); }
         // Start charging jump, but do not set velocity yet
         this.jumpChargeInterval = setInterval(() => {
             const now = performance.now();
@@ -249,8 +249,9 @@ class DinoGame {
             this.velocity -= this.gravity;
             this.position += this.velocity;
 
-            if (this.position <= 45) {
-                this.position = 45;
+            const groundHeight = this.getGroundHeight();
+            if (this.position <= groundHeight) {
+                this.position = groundHeight;
                 this.velocity = 0;
                 this.isOnGround = true;
                 // Add running animation when back on ground
@@ -320,14 +321,26 @@ class DinoGame {
                 { w: 60, h: 80, img: 'assets/cactus2.png' },
                 { w: 80, h: 80, img: 'assets/cactus3.png' }
             ];
-            let left = this.gameContainer.offsetWidth + 10;
+            // Calculate total width of the obstacle group
+            let totalGroupWidth = 0;
+            for (let i = 0; i < groupCount; i++) {
+                const type = Math.floor(Math.random() * 3);
+                let { w } = cactusSizes[type];
+                if (window.innerWidth <= 600) {
+                    w = 28 + type * 10;
+                }
+                totalGroupWidth += w + (i < groupCount - 1 ? 8 : 0); // Add 8px gap between obstacles
+            }
+            
+            // Set initial position well outside the screen
+            let left = this.gameContainer.offsetWidth + (window.innerWidth <= 600 ? 100 : 10); // Extra padding for mobile
+            
             for (let i = 0; i < groupCount; i++) {
                 const type = Math.floor(Math.random() * 3);
                 let { w, h, img } = cactusSizes[type];
                 if (window.innerWidth <= 600) {
-                    // Set all obstacles to match dino height in mobile
                     h = 48;
-                    w = 28 + type * 10; // Slight width variation for each type
+                    w = 28 + type * 10;
                 }
                 const obstacle = document.createElement('div');
                 const typeNames = ['cactus1', 'cactus2', 'cactus3'];
@@ -335,7 +348,12 @@ class DinoGame {
                 obstacle.style.left = `${left}px`;
                 obstacle.style.width = `${w}px`;
                 obstacle.style.height = `${h}px`;
-                obstacle.style.bottom = `${window.innerWidth <= 600 ? Math.round(this.gameContainer.offsetHeight * 0.10) : 50}px`;
+                let groundHeight = 50;
+                if (this.ground) {
+                    const groundRect = this.ground.getBoundingClientRect();
+                    groundHeight = groundRect.height;
+                }
+                obstacle.style.bottom = `${groundHeight}px`;
                 obstacle.style.backgroundImage = `url('${img}')`;
                 obstacle.style.backgroundSize = 'contain';
                 obstacle.style.backgroundRepeat = 'no-repeat';
@@ -431,9 +449,14 @@ class DinoGame {
         this.score = 0;
         this.scoreElement.textContent = 'Score: 00000';
         this.gameOverElement.classList.add('hidden');
-        this.position = 45;
+        this.position = 0;
         this.velocity = 0;
-        this.dino.style.bottom = window.innerWidth <= 600 ? '20px' : '45px';
+        let groundHeight = 50;
+        if (this.ground) {
+            const groundRect = this.ground.getBoundingClientRect();
+            groundHeight = groundRect.height;
+        }
+        this.dino.style.bottom = `${groundHeight}px`;
         // Set dino size based on screen width
         if (window.innerWidth <= 600) {
             this.dino.style.width = DINO_FRAME_WIDTH_MOBILE + 'px';
@@ -546,13 +569,16 @@ class DinoGame {
             lastObstacleLeft + lastObstacleWidth + minDistance,
             this.gameContainer.offsetWidth + minDistance
         );
-        // Create golden egg with position after the last obstacle
+        // Responsive egg size: 6% of container height (min 30px, max 48px)
+        const containerHeight = this.gameContainer.offsetHeight;
+        const eggHeight = Math.max(30, Math.min(48, Math.round(containerHeight * 0.06)));
+        const eggWidth = Math.round(eggHeight * 0.8);
         this.goldenEgg = {
             element: document.createElement('div'),
             x: spawnX,
             y: 0,
-            width: window.innerWidth <= 600 ? 16 : 40,
-            height: window.innerWidth <= 600 ? 18 : 40,
+            width: eggWidth,
+            height: eggHeight,
             collected: false
         };
         // Style the golden egg
@@ -780,9 +806,9 @@ class DinoGame {
             const groundRect = this.ground.getBoundingClientRect();
             groundHeight = groundRect.height;
         }
-        // Set rocket dino height (should match .rocket-dino CSS)
-        const rocketHeight = window.innerWidth <= 600 ? 25 : 70; // px
-        const rocketWidth = window.innerWidth <= 600 ? 25 : 70; // px
+        // Responsive rocket size: 8% of container height (min 50px, max 70px)
+        const rocketHeight = Math.max(50, Math.min(70, Math.round(containerHeight * 0.08)));
+        const rocketWidth = rocketHeight; // square
         const offsetAboveGround = window.innerWidth <= 600 ? 90 : 120; // px
         const top = containerHeight - groundHeight - rocketHeight - offsetAboveGround;
         const rocket = document.createElement('div');
@@ -1043,6 +1069,15 @@ class DinoGame {
             }
         }
         requestAnimationFrame(() => this.gameLoop());
+    }
+
+    getGroundHeight() {
+        let groundHeight = 50;
+        if (this.ground) {
+            const groundRect = this.ground.getBoundingClientRect();
+            groundHeight = groundRect.height;
+        }
+        return groundHeight;
     }
 }
 
