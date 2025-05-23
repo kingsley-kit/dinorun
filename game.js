@@ -18,9 +18,6 @@ class DinoGame {
         this.velocity = 0;
         this.position = 0;
         this.obstacles = [];
-        this.obstacleSpeed = 5.0;  // Reduced from 6.0 for easier start
-        this.currentSpeed = 5.0;   // Reduced from 6.0 for easier start
-        this.maxSpeed = 13.0;
         this.acceleration = 0.00065; // Reduced from 0.00065 for slower acceleration
         this.lastObstacleTime = 0;
         this.minObstacleInterval = 1200; // Increased from 800 for more time between obstacles
@@ -38,13 +35,21 @@ class DinoGame {
         this.distanceTraveled = 0;
         this.lastObstacleX = this.gameContainer.offsetWidth;
         this.nextObstacleDistance = this.getNextObstacleDistance();
-        // Set jump force based on device
+        // Set jump force and obstacle speed based on device
         if (window.innerWidth <= 600) {
-            this.level1JumpForce = 11;  // Mobile jump force
-            this.level2JumpForce = 15;
+            // Mobile
+            this.level1JumpForce = 12;
+            this.level2JumpForce = 16;
+            this.obstacleSpeed = 4.0;   // Slower for mobile
+            this.currentSpeed = 4.0;
+            this.maxSpeed = 10.0;
         } else {
+            // Desktop
             this.level1JumpForce = 15;
             this.level2JumpForce = 20;
+            this.obstacleSpeed = 7.0;   // Faster for desktop
+            this.currentSpeed = 7.0;
+            this.maxSpeed = 15.0;
         }
         
         // Cloud properties
@@ -250,8 +255,8 @@ class DinoGame {
             this.position += this.velocity;
 
             const groundHeight = this.getGroundHeight();
-            if (this.position <= groundHeight) {
-                this.position = groundHeight;
+            if (this.position <= groundHeight - 8) {
+                this.position = groundHeight - 8;
                 this.velocity = 0;
                 this.isOnGround = true;
                 // Add running animation when back on ground
@@ -317,9 +322,9 @@ class DinoGame {
                 else if (Math.random() < 0.18) groupCount = 2;
             }
             const cactusSizes = [
-                { w: 40, h: 80, img: 'assets/cactus.png' },
-                { w: 60, h: 80, img: 'assets/cactus2.png' },
-                { w: 80, h: 80, img: 'assets/cactus3.png' }
+                { w: 40, h: 80, img: 'assets/cactus.webp' },
+                { w: 60, h: 80, img: 'assets/cactus2.webp' },
+                { w: 80, h: 80, img: 'assets/cactus3.webp' }
             ];
             // Calculate total width of the obstacle group
             let totalGroupWidth = 0;
@@ -472,7 +477,6 @@ class DinoGame {
         this.clouds = [];
         this.backgroundPosition = 0;
         this.gameContainer.style.backgroundPosition = '0px 0';
-        this.currentSpeed = this.obstacleSpeed;
         this.dino.classList.remove('dino-jumping', 'dino-hit', 'invincible');
         this.dino.classList.add('dino-running');
         this.dino.style.backgroundImage = "url('assets/dino-run.png')";
@@ -491,10 +495,6 @@ class DinoGame {
         }
         this.isBoosting = false;
         if (this.boostTimeout) clearTimeout(this.boostTimeout);
-        this.currentSpeed = this.obstacleSpeed;
-        this.dino.classList.remove('dino-boosting');
-        // Ensure obstacles spawn after reset
-        this.lastObstacleX = this.gameContainer.offsetWidth;
         this.eggCount = 0;
         const eggCountElem = document.getElementById('egg-count');
         if (eggCountElem) eggCountElem.textContent = this.eggCount;
@@ -583,9 +583,7 @@ class DinoGame {
         };
         // Style the golden egg
         this.goldenEgg.element.className = 'golden-egg';
-        this.goldenEgg.element.style.width = this.goldenEgg.width + 'px';
-        this.goldenEgg.element.style.height = this.goldenEgg.height + 'px';
-        this.goldenEgg.element.style.backgroundImage = 'url("assets/goldenegg.png")';
+        this.goldenEgg.element.style.backgroundImage = 'url("assets/goldenegg.webp")';
         this.goldenEgg.element.style.backgroundSize = 'contain';
         this.goldenEgg.element.style.backgroundRepeat = 'no-repeat';
         this.goldenEgg.element.style.position = 'absolute';
@@ -769,7 +767,7 @@ class DinoGame {
         // Invincibility countdown UI
         const timerDiv = document.getElementById('invincible-timer');
         let seconds = Math.ceil(ms / 1000);
-        timerDiv.innerHTML = `<img src='assets/shield.png' style='height:32px;vertical-align:middle;margin-right:8px;'> <span id='inv-sec'>${seconds}</span>s`;
+        timerDiv.innerHTML = `<img src='assets/shield.webp' style='height:32px;vertical-align:middle;margin-right:8px;'> <span id='inv-sec'>${seconds}</span>s`;
         timerDiv.style.display = 'block';
         // Play shield sound
         if (this.sounds.shield) { this.sounds.shield.currentTime = 0; this.sounds.shield.play(); }
@@ -809,14 +807,12 @@ class DinoGame {
         // Responsive rocket size: 8% of container height (min 50px, max 70px)
         const rocketHeight = Math.max(50, Math.min(70, Math.round(containerHeight * 0.08)));
         const rocketWidth = rocketHeight; // square
-        const offsetAboveGround = window.innerWidth <= 600 ? 90 : 120; // px
+        const offsetAboveGround = window.innerWidth <= 600 ? 70 : 150; // px
         const top = containerHeight - groundHeight - rocketHeight - offsetAboveGround;
         const rocket = document.createElement('div');
         rocket.className = 'rocket-dino';
         rocket.style.left = `${this.gameContainer.offsetWidth}px`;
         rocket.style.top = `${top}px`;
-        rocket.style.width = rocketWidth + 'px';
-        rocket.style.height = rocketHeight + 'px';
         this.gameContainer.appendChild(rocket);
         this.rocketDino = rocket;
     }
@@ -938,7 +934,7 @@ class DinoGame {
         // Use the rocket-specific timer
         const timerDiv = document.getElementById('rocket-invincible-timer');
         let seconds = 2; // Start from 2 seconds
-        timerDiv.innerHTML = `<img src='assets/shield.png' style='height:32px;vertical-align:middle;margin-right:8px;'> <span id='rocket-inv-sec'>${seconds}</span>s`;
+        timerDiv.innerHTML = `<img src='assets/shield.webp' style='height:32px;vertical-align:middle;margin-right:8px;'> <span id='rocket-inv-sec'>${seconds}</span>s`;
         timerDiv.style.display = 'block';
         
         // Clear any existing timers
